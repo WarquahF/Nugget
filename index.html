@@ -1,1 +1,125 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.ico"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><meta name="description" content="Web site created using create-react-app"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><title>React App</title><script defer="defer" src="/static/js/main.36721b85.js"></script></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071014">
+    <meta name="description" content="Nugget JARVIS modular command system">
+    <title>Nugget OS</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="rail" aria-label="System navigation">
+        <div class="brand">
+          <span class="brand-mark">N</span>
+          <span>
+            <strong>Nugget OS</strong>
+            <small>Adaptive command system</small>
+          </span>
+        </div>
+        <nav class="nav-stack">
+          <button class="nav-button active" data-panel="core" title="Core">CORE</button>
+          <button class="nav-button" data-panel="vision" title="Hand tracking">VISION</button>
+          <button class="nav-button" data-panel="modules" title="Modules">MODULES</button>
+          <button class="nav-button" data-panel="security" title="Security">SECURITY</button>
+        </nav>
+        <div class="rail-status">
+          <span class="pulse"></span>
+          <span id="systemState">BOOTING</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="hero-band">
+          <div>
+            <p class="eyebrow">LOCAL SYSTEM ONLINE</p>
+            <h1>Command deck with vision control.</h1>
+          </div>
+          <div class="signal-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </section>
+
+        <section id="core" class="panel active-panel">
+          <div class="orb-stage" aria-hidden="true">
+            <div class="orb">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          <div class="command-hub">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">CORE</p>
+                <h2>Assistant Console</h2>
+              </div>
+              <button id="voiceButton" class="icon-button" title="Voice input">MIC</button>
+            </div>
+            <div id="chatLog" class="chat-log" aria-live="polite"></div>
+            <form id="commandForm" class="command-form">
+              <input id="commandInput" autocomplete="off" placeholder="Ask anything, launch a module, or say open calculator">
+              <button type="submit">Send</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="vision" class="panel split-panel">
+          <div class="vision-deck">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">VISION</p>
+                <h2>Hand Article Control</h2>
+              </div>
+              <button id="cameraButton">Start Camera</button>
+            </div>
+            <div class="camera-frame">
+              <video id="cameraFeed" playsinline muted></video>
+              <canvas id="handCanvas"></canvas>
+              <div id="cameraNotice" class="camera-notice">Camera idle</div>
+            </div>
+            <div class="telemetry">
+              <span>Hand: <strong id="handStatus">offline</strong></span>
+              <span>X: <strong id="handX">--</strong></span>
+              <span>Y: <strong id="handY">--</strong></span>
+            </div>
+          </div>
+          <div id="articleArena" class="article-arena">
+            <article id="handArticle" class="hand-article">
+              <p class="eyebrow">ARTICLE</p>
+              <h3>Move me with your hand</h3>
+              <p>Raise one hand in front of the camera. The card follows your index fingertip across this arena.</p>
+              <div class="article-meter"><span></span></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="modules" class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">MODULES</p>
+              <h2>System Matrix</h2>
+            </div>
+            <button id="refreshModules">Refresh</button>
+          </div>
+          <div id="moduleGrid" class="module-grid"></div>
+        </section>
+
+        <section id="security" class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">SECURITY</p>
+              <h2>Diagnostics</h2>
+            </div>
+            <button id="runDiagnostics">Run Scan</button>
+          </div>
+          <div id="diagnostics" class="diagnostics"></div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

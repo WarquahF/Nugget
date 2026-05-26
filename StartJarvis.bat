@@ -1,4 +1,5 @@
 @echo off
-cd /d "%~dp0front-end"
-powershell -ExecutionPolicy Bypass -Command "npm run electron-dev"
-pause
+setlocal
+cd /d "%~dp0"
+echo Starting Nugget OS...
+npm start

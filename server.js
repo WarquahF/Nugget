@@ -1,260 +1,155 @@
-// J.A.R.V.I.S Backend Server
-// Handles secure operations and sensitive data
+const { createServer } = require("http");
+const { readFile } = require("fs/promises");
+const { existsSync } = require("fs");
+const { extname, join, normalize } = require("path");
+const { spawn } = require("child_process");
 
-const express = require('express');
-const cors = require('cors');
-const { spawn } = require('child_process');
-const path = require('path');
-const nodemailer = require('nodemailer');
+const PORT = Number(process.env.PORT) || 3000;
+const ROOT = __dirname;
 
-const { config, validateConfig, getContacts } = require('./config');
+const modules = [
+  { name: "Vision Control", status: "ready", load: 74, detail: "Camera hand tracking and article motion" },
+  { name: "Launcher", status: "armed", load: 61, detail: "Whitelisted desktop app commands" },
+  { name: "Memory Core", status: "syncing", load: 43, detail: "Session notes and local context" },
+  { name: "Voice Router", status: "ready", load: 58, detail: "Browser speech input when supported" },
+  { name: "Network Pulse", status: "stable", load: 36, detail: "Local server health monitor" },
+  { name: "Security Mesh", status: "watch", load: 82, detail: "Runtime checks and surface hardening" }
+];
 
-const app = express();
-const PORT = config.app.port;
+const allowedApps = new Map([
+  ["calculator", "calc"],
+  ["calc", "calc"],
+  ["notepad", "notepad"],
+  ["paint", "mspaint"],
+  ["explorer", "explorer"],
+  ["terminal", "wt"],
+  ["cmd", "cmd"],
+  ["edge", "msedge"],
+  ["chrome", "chrome"],
+  ["vscode", "code"],
+  ["code", "code"],
+  ["taskmanager", "taskmgr"]
+]);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".svg": "image/svg+xml; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8"
+};
 
-// Validate configuration on startup
-if (!validateConfig()) {
-  console.error('Server configuration incomplete. Please check your .env file.');
-  process.exit(1);
-}
-
-// Email transporter
-let emailTransporter;
-try {
-  emailTransporter = nodemailer.createTransporter({
-    service: config.email.service,
-    auth: {
-      user: config.email.user,
-      pass: config.email.pass
-    }
-  });
-  console.log('Email service configured successfully');
-} catch (error) {
-  console.error('Failed to configure email service:', error.message);
-}
-
-// API Routes
-
-// Get secure contacts (instead of storing in frontend)
-app.get('/api/contacts', (req, res) => {
+const server = createServer(async (req, res) => {
   try {
-    const contacts = getContacts();
-    res.json({ success: true, contacts });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+    const url = new URL(req.url, `http://${req.headers.host}`);
 
-// Send email (secure backend implementation)
-app.post('/api/send-email', async (req, res) => {
-  try {
-    const { to, subject, message } = req.body;
-
-    // Validate inputs
-    if (!to || !subject || !message) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required fields: to, subject, message' 
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(to)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid email address format' 
-      });
-    }
-
-    // Sanitize message content
-    const sanitizedMessage = message
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+\s*=/gi, '')
-      .trim()
-      .substring(0, 1000);
-
-    const mailOptions = {
-      from: config.email.from,
-      to,
-      subject: subject.substring(0, 100), // Limit subject length
-      text: sanitizedMessage,
-      html: `<p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>`
-    };
-
-    const result = await emailTransporter.sendMail(mailOptions);
-    
-    console.log('Email sent successfully:', result.messageId);
-    res.json({ 
-      success: true, 
-      messageId: result.messageId,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Email send error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Launch application (secure backend implementation)
-app.post('/api/launch-app', async (req, res) => {
-  try {
-    const { executable, appName } = req.body;
-
-    // Validate inputs
-    if (!executable || !appName) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required fields: executable, appName' 
-      });
-    }
-
-    // Check if app is allowed
-    if (!config.launcher.allowedApps.includes(executable.toLowerCase())) {
-      return res.status(403).json({ 
-        success: false, 
-        error: `Application "${executable}" is not authorized for launch` 
-      });
-    }
-
-    console.log(`Launching application: ${appName} (${executable})`);
-
-    // Platform-specific launching
-    const platform = process.platform;
-    let launchCommand;
-
-    switch (platform) {
-      case 'win32':
-        launchCommand = `start "" "${executable}"`;
-        break;
-      case 'darwin':
-        // For macOS, we need to map executable names to app names
-        const macAppMap = {
-          'chrome': 'Google Chrome',
-          'firefox': 'Firefox',
-          'discord': 'Discord',
-          'slack': 'Slack',
-          'code': 'Visual Studio Code',
-          'vlc': 'VLC'
-        };
-        const macAppName = macAppMap[executable] || executable;
-        launchCommand = `open -a "${macAppName}"`;
-        break;
-      case 'linux':
-        launchCommand = executable;
-        break;
-      default:
-        return res.status(500).json({ 
-          success: false, 
-          error: `Unsupported platform: ${platform}` 
-        });
-    }
-
-    // Execute launch command
-    const child = spawn(launchCommand, [], {
-      stdio: 'ignore',
-      detached: true,
-      shell: true
-    });
-
-    child.unref();
-
-    // Set timeout
-    const timeout = setTimeout(() => {
-      child.kill();
-      res.status(500).json({ 
-        success: false, 
-        error: 'Application launch timeout' 
-      });
-    }, config.launcher.timeout);
-
-    child.on('error', (error) => {
-      clearTimeout(timeout);
-      res.status(500).json({ 
-        success: false, 
-        error: `Failed to execute command: ${error.message}` 
-      });
-    });
-
-    child.on('spawn', () => {
-      clearTimeout(timeout);
-      console.log(`Application ${appName} launched successfully`);
-      res.json({ 
-        success: true, 
-        appName,
-        executable,
-        platform,
+    if (url.pathname === "/api/health") {
+      return sendJson(res, 200, {
+        success: true,
+        status: "healthy",
+        version: "2.0.0",
         timestamp: new Date().toISOString()
       });
-    });
+    }
 
+    if (url.pathname === "/api/modules") {
+      return sendJson(res, 200, { success: true, modules });
+    }
+
+    if (url.pathname === "/api/launch-app" && req.method === "POST") {
+      const body = await readJson(req);
+      return launchApp(res, body);
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      return sendJson(res, 404, { success: false, error: "Endpoint not found" });
+    }
+
+    return serveStatic(url.pathname, res);
   } catch (error) {
-    console.error('App launch error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    return sendJson(res, 500, { success: false, error: error.message });
   }
 });
 
-// Get available applications
-app.get('/api/available-apps', (req, res) => {
-  try {
-    res.json({ 
-      success: true, 
-      apps: config.launcher.allowedApps 
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+async function serveStatic(pathname, res) {
+  const cleanPath = pathname === "/" ? "/index.html" : pathname;
+  const filePath = normalize(join(ROOT, cleanPath));
+
+  if (!filePath.startsWith(ROOT) || !existsSync(filePath)) {
+    return sendJson(res, 404, { success: false, error: "File not found" });
+  }
+
+  const data = await readFile(filePath);
+  res.writeHead(200, {
+    "Content-Type": mimeTypes[extname(filePath).toLowerCase()] || "application/octet-stream",
+    "Cache-Control": "no-store"
+  });
+  res.end(data);
+}
+
+function launchApp(res, body) {
+  const requested = String(body.appName || body.executable || "").toLowerCase().trim();
+  const command = allowedApps.get(requested);
+
+  if (!command) {
+    return sendJson(res, 400, {
+      success: false,
+      error: `"${requested || "unknown"}" is not in the allowed launcher list.`
     });
   }
-});
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
+  const child = spawn(command, [], {
+    detached: true,
+    stdio: "ignore",
+    shell: process.platform === "win32"
   });
-});
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: 'Internal server error' 
+  child.once("error", (error) => {
+    sendJson(res, 500, { success: false, error: error.message });
   });
-});
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    error: 'Endpoint not found' 
+  child.once("spawn", () => {
+    child.unref();
+    sendJson(res, 200, {
+      success: true,
+      message: `${requested} launched.`,
+      appName: requested,
+      command
+    });
   });
-});
+}
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`J.A.R.V.I.S Backend Server running on port ${PORT}`);
-  console.log(`Environment: ${config.app.env}`);
-  console.log(`Email service: ${emailTransporter ? 'Configured' : 'Not configured'}`);
-});
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+      if (raw.length > 1_000_000) {
+        req.destroy();
+        reject(new Error("Request body too large"));
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error("Invalid JSON body"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
 
-module.exports = app;
+function sendJson(res, status, payload) {
+  if (res.headersSent) return;
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify(payload));
+}
+
+server.listen(PORT, () => {
+  console.log(`Nugget OS running at http://localhost:${PORT}`);
+  console.log("Camera hand tracking works from localhost after browser permission is granted.");
+});
