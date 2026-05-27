@@ -2,7 +2,7 @@
   "name": "nugget-jarvis-system",
   "version": "2.0.0",
   "private": true,
-  "description": "A modular JARVIS-style command system with camera hand tracking.",
+  "description": "A modular JARVIS-style command system with camera hand tracking and a tactical globe.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

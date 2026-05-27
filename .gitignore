@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/node-portable
+/node-v*-win-x64
 /.pnp
 .pnp.js
 
@@ -21,3 +23,5 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+debug-*.log
+nugget-os-preview.png

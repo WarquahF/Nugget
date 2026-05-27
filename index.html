@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#071014">
     <meta name="description" content="Nugget JARVIS modular command system">
-    <title>Nugget OS</title>
+    <title>Nugget</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/styles.css">
@@ -16,13 +16,14 @@
         <div class="brand">
           <span class="brand-mark">N</span>
           <span>
-            <strong>Nugget OS</strong>
+            <strong>Nugget</strong>
             <small>Adaptive command system</small>
           </span>
         </div>
         <nav class="nav-stack">
           <button class="nav-button active" data-panel="core" title="Core">CORE</button>
           <button class="nav-button" data-panel="vision" title="Hand tracking">VISION</button>
+          <button class="nav-button" data-panel="map" title="Tactical map">MAP</button>
           <button class="nav-button" data-panel="modules" title="Modules">MODULES</button>
           <button class="nav-button" data-panel="security" title="Security">SECURITY</button>
         </nav>
@@ -36,7 +37,7 @@
         <section class="hero-band">
           <div>
             <p class="eyebrow">LOCAL SYSTEM ONLINE</p>
-            <h1>Command deck with vision control.</h1>
+            <h1>Command deck with tactical vision.</h1>
           </div>
           <div class="signal-grid" aria-hidden="true">
             <span></span><span></span><span></span><span></span>
@@ -94,6 +95,28 @@
               <p>Raise one hand in front of the camera. The card follows your index fingertip across this arena.</p>
               <div class="article-meter"><span></span></div>
             </article>
+          </div>
+        </section>
+
+        <section id="map" class="panel map-panel">
+          <div class="globe-stage">
+            <div class="map-toolbar">
+              <div>
+                <p class="eyebrow">TACTICAL MAP</p>
+                <h2>Global City Sphere</h2>
+              </div>
+              <div class="map-controls">
+                <button id="globeMaxButton">Max</button>
+                <button id="globeResetButton">Reset</button>
+              </div>
+            </div>
+            <div id="globeMount" class="globe-mount"></div>
+            <div id="cityLabels" class="city-labels" aria-hidden="true"></div>
+            <div class="map-readout">
+              <span>Scale <strong id="globeScale">1.00</strong></span>
+              <span>Cities <strong id="cityCount">--</strong></span>
+              <span>Pinch <strong id="pinchLevel">idle</strong></span>
+            </div>
           </div>
         </section>
 

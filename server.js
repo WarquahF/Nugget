@@ -9,6 +9,7 @@ const ROOT = __dirname;
 
 const modules = [
   { name: "Vision Control", status: "ready", load: 74, detail: "Camera hand tracking and article motion" },
+  { name: "Tactical Globe", status: "ready", load: 88, detail: "3D city sphere with pinch expansion" },
   { name: "Launcher", status: "armed", load: 61, detail: "Whitelisted desktop app commands" },
   { name: "Memory Core", status: "syncing", load: 43, detail: "Session notes and local context" },
   { name: "Voice Router", status: "ready", load: 58, detail: "Browser speech input when supported" },
@@ -150,6 +151,6 @@ function sendJson(res, status, payload) {
 }
 
 server.listen(PORT, () => {
-  console.log(`Nugget OS running at http://localhost:${PORT}`);
+  console.log(`Nugget running at http://localhost:${PORT}`);
   console.log("Camera hand tracking works from localhost after browser permission is granted.");
 });
